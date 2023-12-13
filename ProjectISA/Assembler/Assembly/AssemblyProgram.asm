@@ -1,10 +1,13 @@
-someLabel:
+; count to infinity:
+JMP #start
 
+NOP
+NOP
+NOP
 
-SET R0 1              
-anotherLabel:            ;aaaaaaaaaaaaaa  
-SET R1 2
-ADD R3 R0 R1
-;commentedLabel:
-
-JMP #cafe
+start:
+  SET R0 0
+  SET R1 1
+  loop:
+    ADD R0 R0 R1
+    JMP #loop

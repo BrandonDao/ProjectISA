@@ -7,7 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Instructions\FlowControl\" />
     <Folder Include="Instructions\Display\" />
   </ItemGroup>
 

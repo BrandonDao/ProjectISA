@@ -1,10 +1,13 @@
-﻿namespace SharedLibrary.Instructions.Memory
+﻿using System.Diagnostics;
+
+namespace SharedLibrary.Instructions.Memory
 {
-    internal class SET : Instruction
+    [DebuggerDisplay("SET R{data[1]} {(short)((data[2] << 8) | data[3])}")]
+    public class SET : Instruction
     {
         public override string Name => "SET";
         public override byte OpCode => 0x40;
-        protected override Func<string, byte>[] InstructionParts =>
-            new Func<string, byte>[] { Parts.Register, Parts.Memory, Parts.Memory };
+        protected override Parts.Parser[] PartParsers =>
+            new Parts.Parser[] { Parts.Register, Parts.Immediate };
     }
 }
