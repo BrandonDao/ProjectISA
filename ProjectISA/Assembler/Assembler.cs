@@ -5,6 +5,14 @@ namespace Assembler
     internal static class Assembler
     {
         public static void Assemble(string assemblyFile, string outputFile)
-            => File.WriteAllBytes(outputFile, Instruction.ToByteArray(Instruction.Parse(File.ReadAllText(assemblyFile).Split("\n"))));
+        {
+            string[] asmInstructions = File.ReadAllText(assemblyFile).Split("\n");
+
+            List<Instruction> instructions = Instruction.Parse(asmInstructions);
+
+            byte[] bytecode = Instruction.ToByteArray(instructions);
+
+            File.WriteAllBytes(outputFile, bytecode);
+        }
     }
 }

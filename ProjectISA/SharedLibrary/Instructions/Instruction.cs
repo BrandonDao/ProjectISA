@@ -1,7 +1,4 @@
-﻿using SharedLibrary.Instructions.ALU;
-using SharedLibrary.Instructions.FlowControl;
-using SharedLibrary.Instructions.Logic;
-using SharedLibrary.Instructions.Memory;
+﻿using System.Reflection;
 using System.Text.RegularExpressions;
 
 namespace SharedLibrary.Instructions
@@ -58,28 +55,62 @@ namespace SharedLibrary.Instructions
             }
         }
 
-        private static Dictionary<string, Func<Instruction>> NameToNewInstruction { get; } = new()
-        {
-            // No Operation
-            ["NOP"]     = () => new NOP(),
-            // Math
-            ["ADD"]     = () => new ADD(),
-            // Logic
-            ["EQ"]      = () => new EQ(),
-            // Flow Control
-            ["JMP"]     = () => new JMP(),
-            ["JMPT"]    = () => new JMPT(),
-            // Memory
-            ["SET"]     = () => new SET(),
-        };
+        private static readonly Dictionary<string, Func<Instruction>> nameToNewInstruction;
 
         public const byte Length = 4;
 
-        public abstract string Name { get; }
         public abstract byte OpCode { get; }
         public uint MachineCode => (uint)(data![0] << 24 | data[1] << 16 | data[2] << 8 | data[3]);
         protected abstract Parts.Parser[] PartParsers { get; }
         protected byte[]? data;
+
+
+        static Instruction()
+        {
+            Type instructionType = typeof(Instruction);
+            Type namedInstructionAttributeType = typeof(NamedInstructionAttribute);
+
+            Assembly? instructionAssembly = Assembly.GetAssembly(instructionType) ?? throw new InvalidOperationException("Could not find any instructions!");
+
+            var allInstructions = instructionAssembly
+                .GetTypes()
+                .Where(type => type.IsSubclassOf(instructionType));
+
+
+            // Build map with attribute check _____________________________
+            Dictionary<Type, string> instructionTypeToAttributeName = allInstructions.ToDictionary(
+                keySelector: type => type,
+                elementSelector: type =>
+                    {
+                        var attribute = type
+                            .GetCustomAttribute<NamedInstructionAttribute>();
+
+                        return attribute == null
+                                ? throw new NotImplementedException($"\"{type.Name}\" is missing a NamedInstructionAttribute!")
+                                : attribute!.Name;
+                    });
+
+            nameToNewInstruction = allInstructions.ToDictionary<Type, string, Func<Instruction>>(
+                keySelector: type => instructionTypeToAttributeName[type],
+                elementSelector: type =>
+                    () =>
+                        (Instruction?)Activator.CreateInstance(type) ?? throw new InvalidOperationException($"Could not instantiate instruction: {type}"));
+
+
+            // Build map without attribute check _____________________________
+            //nameToNewInstruction = allInstructions.ToDictionary<Type, string, Func<Instruction>>(
+            //    keySelector: type =>
+            //        ((NamedInstructionAttribute)type
+            //            .GetCustomAttributes()
+            //            .Where(attribute => attribute is NamedInstructionAttribute)
+            //            .First()).Name,
+            //    elementSelector: type =>
+            //        () =>
+            //            (Instruction?)Activator.CreateInstance(type) ?? throw new InvalidOperationException("Could not instantiate instruction"));
+
+            ;
+        }
+
 
         public static byte[] ToByteArray(List<Instruction> instructions)
         {
@@ -102,7 +133,7 @@ namespace SharedLibrary.Instructions
         public static List<Instruction> Parse(string[] asmInstructions)
             => ParseIL(ParseAssembly(asmInstructions));
 
-        private static (List<string>, Dictionary<string, ushort>) ParseAssembly(string[] asmInstructions)
+        private static (List<string> ILInstructions, Dictionary<string, ushort> labelToLineMap) ParseAssembly(string[] asmInstructions)
         {
             Dictionary<string, ushort> LabelToLineMap = new();
             List<string> ParsedASM = new();
@@ -135,12 +166,12 @@ namespace SharedLibrary.Instructions
             return (ParsedASM, LabelToLineMap);
         }
 
-        private static List<Instruction> ParseIL((List<string>, Dictionary<string, ushort>) ILInfo)
+        private static List<Instruction> ParseIL((List<string> ILInstructions, Dictionary<string, ushort> labelToLineMap) ILInfo)
         {
-            List<string> ILInstructions = ILInfo.Item1;
-            List<Instruction> parsedILInstructions = new(ILInstructions.Count);
+            List<string> ILInstructions = ILInfo.ILInstructions;
+            Dictionary<string, ushort> labelToLineMap = ILInfo.labelToLineMap;
 
-            Dictionary<string, ushort> labelToLineMap = ILInfo.Item2;
+            List<Instruction> parsedILInstructions = new(ILInstructions.Count);
 
             string asm, name;
             int asmIndex, dataIndex, endOfNameIndex, labelIndex;
@@ -154,7 +185,7 @@ namespace SharedLibrary.Instructions
                 name = endOfNameIndex == -1 ? asm : asm[..endOfNameIndex];
                 asm = asm[name.Length..];
 
-                instruction = NameToNewInstruction[name].Invoke();
+                instruction = nameToNewInstruction[name].Invoke();
                 instruction.data = new byte[Length];
                 instruction.data[0] = instruction.OpCode;
 
@@ -162,12 +193,12 @@ namespace SharedLibrary.Instructions
                 dataIndex = 1;
 
                 labelIndex = asm.IndexOf('#');
-                if(labelIndex != -1)
+                if (labelIndex != -1)
                 {
                     asm = asm[..labelIndex] + labelToLineMap[asm[(labelIndex + 1)..]].ToString();
                 }
 
-                foreach(Parts.Parser parser in instruction.PartParsers)
+                foreach (Parts.Parser parser in instruction.PartParsers)
                 {
                     if (parser == Parts.Pad) continue;
 
