@@ -1,5 +1,6 @@
 ﻿using SharedLibrary.Instructions.ALU;
 using SharedLibrary.Instructions.FlowControl;
+using SharedLibrary.Instructions.Logic;
 using SharedLibrary.Instructions.Memory;
 using System.Text.RegularExpressions;
 
@@ -60,13 +61,16 @@ namespace SharedLibrary.Instructions
         private static Dictionary<string, Func<Instruction>> NameToNewInstruction { get; } = new()
         {
             // No Operation
-            ["NOP"] = () => new NOP(),
+            ["NOP"]     = () => new NOP(),
             // Math
-            ["ADD"] = () => new ADD(),
+            ["ADD"]     = () => new ADD(),
+            // Logic
+            ["EQ"]      = () => new EQ(),
             // Flow Control
-            ["JMP"] = () => new JMP(),
+            ["JMP"]     = () => new JMP(),
+            ["JMPT"]    = () => new JMPT(),
             // Memory
-            ["SET"] = () => new SET(),
+            ["SET"]     = () => new SET(),
         };
 
         public const byte Length = 4;
@@ -158,7 +162,7 @@ namespace SharedLibrary.Instructions
                 dataIndex = 1;
 
                 labelIndex = asm.IndexOf('#');
-                if((instruction.OpCode & 0xF0) == 0x30 && (instruction.OpCode & 0x0F) == 0 && labelIndex != -1)
+                if(labelIndex != -1)
                 {
                     asm = asm[..labelIndex] + labelToLineMap[asm[(labelIndex + 1)..]].ToString();
                 }

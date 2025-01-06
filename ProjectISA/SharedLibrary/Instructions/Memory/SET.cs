@@ -2,7 +2,7 @@
 
 namespace SharedLibrary.Instructions.Memory
 {
-    [DebuggerDisplay("SET R{data[1]} {(short)((data[2] << 8) | data[3])}")]
+    [DebuggerDisplay("SET R{data[1]} to {(short)((data[2] << 8) | data[3])}")]
     public class SET : Instruction
     {
         public override string Name => "SET";

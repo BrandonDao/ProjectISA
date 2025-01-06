@@ -2,7 +2,7 @@
 
 namespace SharedLibrary.Instructions.ALU
 {
-    [DebuggerDisplay("ADD R{data[1]} R{data[2]} R{data[3]}")]
+    [DebuggerDisplay("ADD R{data[1]} = R{data[2]} + R{data[3]}")]
     public class ADD : Instruction
     {
         public override string Name => "ADD";

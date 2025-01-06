@@ -2,7 +2,7 @@
 
 namespace SharedLibrary.Instructions.FlowControl
 {
-    [DebuggerDisplay("JMP {(short)((data[2] << 8) | data[3])}")]
+    [DebuggerDisplay("JMP to {(short)((data[2] << 8) | data[3])}")]
     public class JMP : Instruction
     {
         public override string Name => "JMP";
