@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace SharedLibrary.Instructions.Logic
+namespace SharedLibrary.Instructions.ALU
 {
     [DebuggerDisplay("EQ R{data[1]} = R{data[2]} == R{data[3]}")]
     [NamedInstruction("EQ")]

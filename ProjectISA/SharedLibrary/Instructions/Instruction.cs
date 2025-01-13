@@ -10,7 +10,6 @@ namespace SharedLibrary.Instructions
             public delegate int Parser(string asm, int startIndex, ref int dataIndex, ref byte[] data);
             public static Parser Register => RegisterBacking;
             public static Parser Immediate => ImmediateBacking;
-            public static Parser Memory => MemoryBacking;
             public static Parser Pad => PadBacking;
 
             private static int RegisterBacking(string asm, int startIndex, ref int dataIndex, ref byte[] data)
@@ -47,7 +46,6 @@ namespace SharedLibrary.Instructions
                 }
                 throw new ArgumentException($"Could not parse memory!");
             }
-            private static int MemoryBacking(string asm, int startIndex, ref int dataIndex, ref byte[] data) => throw new NotImplementedException();
             private static int PadBacking(string asm, int startIndex, ref int dataIndex, ref byte[] data)
             {
                 data[dataIndex++] = 0xFF;
